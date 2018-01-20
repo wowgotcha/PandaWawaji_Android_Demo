@@ -23,7 +23,7 @@ import org.json.JSONObject;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private final static String TAG = "MainActivity";
     private MainActivity activity;
-    private Button upBtn, leftBtn, downBtn, rightBtn, startBtn, grabBtn;
+    private Button upBtn, leftBtn, downBtn, rightBtn, startBtn, grabBtn, joinRoomBtn, quitRoomBtn;
     private EditText wsUrlText;
     private ImageView ivSwitch;
     private AVRootView avRootView;
@@ -35,6 +35,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String mSideCameraId = "wowgotcha_500138_2"; //侧摄像头主播 ID
     private String userid = "test"; //玩家ID
     private String usersig = ""; //玩家互动直播登录签名凭证
+    private String wsUrl = "ws://ws1.open.wowgotcha.com:9090/play/1685c6fbb5dd8bdae98db3e65ecfd90a7a5bdc7d";
 
     private View.OnTouchListener operationTouchListener = new View.OnTouchListener(){
         @Override
@@ -147,6 +148,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         wsUrlText = (EditText) findViewById(R.id.wsUrlText);
         ivSwitch = (ImageView) findViewById(R.id.ivSwitch);
         avRootView = (AVRootView) findViewById(R.id.avRootView);
+        joinRoomBtn = (Button) findViewById(R.id.joinRoomBtn);
+        quitRoomBtn = (Button) findViewById(R.id.quitRoomBtn);
         // 初始化视频
         ivSwitch.setOnClickListener(this);
         xhLiveManager = XHLiveManager.sharedManager();
@@ -154,7 +157,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         login();
 
         // 初始化游戏
-        wsUrlText.setText("ws://ws1.open.wowgotcha.com:9090/play/1685c6fbb5dd8bdae98db3e65ecfd90a7a5bdc7d");
+        wsUrlText.setText(wsUrl);
         startBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -187,6 +190,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 PlayerManager.sharedManager().sendOperation(PlayerManager.PLAYER_OPERATION_GRAB);
             }
         });
+        joinRoomBtn.setOnClickListener(this);
+        quitRoomBtn.setOnClickListener(this);
         PlayerManager.init(getBaseContext());
         PlayerManager.sharedManager().setManagerListener(managerListener);
         PlayerManager.sharedManager().setDebug(true);
@@ -217,6 +222,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.ivSwitch:
                 XHLiveManager.sharedManager().switchCamera();
                 break;
+            case R.id.joinRoomBtn:
+                joinRoom();
+                break;
+            case R.id.quitRoomBtn:
+                quitRoom();
+                break;
         }
     }
 
@@ -225,7 +236,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onSuccess() {
                 Toast.makeText(activity, "Login Success", Toast.LENGTH_SHORT).show();
-                joinRoom();
             }
             @Override
             public void onError(String module, int errCode, String errMsg) {
@@ -244,6 +254,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onError(String module, int errCode, String errMsg) {
                 Toast.makeText(activity, "Enter Room Error", Toast.LENGTH_SHORT).show();
                 joinRoom();
+            }
+        });
+    }
+    private void quitRoom() {
+        XHLiveManager.sharedManager().quitRoom(new XHLiveListener(){
+            @Override
+            public void onSuccess() {
+                Toast.makeText(activity, "quit Room Success", Toast.LENGTH_SHORT).show();
+            }
+            public void onError(String module, int errCode, String errMsg) {
+                Toast.makeText(activity, "quit Room Error", Toast.LENGTH_SHORT).show();
             }
         });
     }
