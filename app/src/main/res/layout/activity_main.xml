@@ -6,19 +6,19 @@
     android:layout_height="match_parent"
     tools:context="com.panda.wawajisdk.demo.MainActivity">
 
-    <FrameLayout
+    <com.tencent.ilivesdk.view.AVRootView
+        android:id="@+id/avRootView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_weight="1"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <com.tencent.ilivesdk.view.AVRootView
-            android:id="@+id/avRootView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-    </FrameLayout>
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/constraintLayout"
@@ -108,6 +108,26 @@
         app:layout_constraintTop_toBottomOf="@+id/wsUrlText" />
 
     <Button
+        android:id="@+id/insertCoinsBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="投币"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/startBtn" />
+
+    <Button
+        android:id="@+id/startQueueBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:text="开始排队"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/joinRoomBtn" />
+
+    <Button
         android:id="@+id/joinRoomBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -126,6 +146,18 @@
         android:text="退出房间"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/wsUrlText" />
+
+    <Button
+        android:id="@+id/cancelQueueBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="10dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="10dp"
+        android:text="取消排队"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/quitRoomBtn" />
 
     <ImageView
         android:id="@+id/ivSwitch"
