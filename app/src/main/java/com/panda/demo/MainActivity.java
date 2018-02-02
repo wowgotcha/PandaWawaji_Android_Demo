@@ -152,6 +152,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         quitRoomBtn = (Button) findViewById(R.id.quitRoomBtn);
         // 初始化视频
         ivSwitch.setOnClickListener(this);
+        XHLiveManager.setLogPrint(false);
         xhLiveManager = XHLiveManager.sharedManager();
         xhLiveManager.initSdk(getBaseContext(), sdkAppid, accountType);
         login();
@@ -194,8 +195,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         quitRoomBtn.setOnClickListener(this);
         PlayerManager.init(getBaseContext());
         PlayerManager.sharedManager().setManagerListener(managerListener);
-        PlayerManager.sharedManager().setDebug(true);
-
+        PlayerManager.setLogPrint(true);
     }
 
     @Override

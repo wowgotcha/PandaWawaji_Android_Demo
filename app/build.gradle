@@ -32,7 +32,7 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
-    implementation 'com.tencent.ilivesdk:ilivesdk:1.7.2'
+    implementation 'com.tencent.ilivesdk:ilivesdk:1.8.2'
     implementation 'com.tencent.livesdk:livesdk:1.1.4'
     implementation 'com.tencent.ilivefilter:liteav_normal:1.1.18'
     implementation 'com.tencent.iliveptufilter:iliveptufilter:1.0.4'
