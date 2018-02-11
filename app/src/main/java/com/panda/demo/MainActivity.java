@@ -143,6 +143,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             showToast(result);
         }
         @Override
+        public void gameReconnect(JSONObject data) {
+            Log.d(TAG, "gameReconnect -> " + data.toString());
+            showToast("重连");
+        }
+
+        @Override
         public void websocketClosed() {
             Log.d(TAG, "websocketClosed");
         }
