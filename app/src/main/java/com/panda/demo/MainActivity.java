@@ -1,5 +1,7 @@
 package com.panda.demo;
 
+import android.app.UiModeManager;
+import android.content.res.Configuration;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -13,10 +15,14 @@ import android.widget.Toast;
 
 import com.panda.wawajisdk.core.PlayerManager;
 import com.panda.wawajisdk.core.XHLiveManager;
+import com.panda.wawajisdk.core.XHLivePlayer;
 import com.panda.wawajisdk.core.listener.PlayerConnectionListener;
 import com.panda.wawajisdk.core.listener.PlayerManagerListener;
 import com.panda.wawajisdk.core.listener.XHLiveListener;
+import com.panda.wawajisdk.core.listener.XHLivePlayerListener;
 import com.tencent.ilivesdk.view.AVRootView;
+import com.tencent.rtmp.TXLiveConstants;
+import com.tencent.rtmp.ui.TXCloudVideoView;
 
 import org.json.JSONObject;
 
@@ -30,13 +36,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private XHLiveManager xhLiveManager;
     private int sdkAppid = 0; //互动直播 sdkAppid
     private int accountType = 0; //互动直播 accountType
-    private int roomId = 500138; //视频房间号
-    private String mMainCameraId = "wowgotcha_500138_1"; //主摄像头主播ID
-    private String mSideCameraId = "wowgotcha_500138_2"; //侧摄像头主播 ID
+    private int roomId = 500139; //视频房间号
+    private String mMainCameraId = "wowgotcha_" + roomId + "_1"; //主摄像头主播ID
+    private String mSideCameraId = "wowgotcha_" + roomId + "_2"; //侧摄像头主播 ID
     private String userid = "test"; //玩家ID
-    private String usersig = ""; //玩家互动直播登录签名凭证
-    private String wsUrl = "ws://ws1.open.wowgotcha.com:9090/play/1685c6fbb5dd8bdae98db3e65ecfd90a7a5bdc7d";
+    //玩家互动直播登录签名凭证
+    private String usersig = "eJxlj1FrgzAYRd-9FZJXxxYTo*1gD7azsG5tsa1F9hJE0-G1mMYkK8rof9-mChV2X8*5XO6X47ou2r5t7ouyPH1Ky22nBHIfXYTR3Q0qBRUvLKe6*gdFq0ALXuyt0D30GWME46EDlZAW9nA1rDB2QE115P3EXz346TIcjelQgY8eLpJs*jLDsyyW50gWRrUPmZnnO5KOmrAZUcrythL0lSzy1Xsz72JIYjxNy6XuJnlri3Q3kWvPJPW29mApD1aqQ*IF3uoZkvUxeBpMWqjF9Q8lUTgmJBzQs9AGTrIXCPaZTyj*DXIuzjeTtVyA";
+    private String wsUrl = "ws://ws1.open.wowgotcha.com:9090/play/b404217fbd5a2df1d6bfb462c3d60a7a0ee7b693";
+    private String masterUrl = "rtmp://15814.liveplay.myqcloud.com/live/15814_8985b20c42e3bf0a5e30330158febabd";
+    private String slaveUrl = "rtmp://15814.liveplay.myqcloud.com/live/15814_c1e71d8fe70e5733538879ed715e81c0";
     private Toast toast = null;
+    private TXCloudVideoView mMasterLiveViewoView;
+    private TXCloudVideoView mSlaveLiveViewoView;
 
     private View.OnTouchListener operationTouchListener = new View.OnTouchListener(){
         @Override
@@ -128,7 +139,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
             Log.d(TAG, text);
             String result = "投币成功";
-            if (! success) {
+            if (success) {
+                // 上麦
+                upToVideoMember();
+            } else {
                 result = errmsg;
             }
             showToast(result);
@@ -141,7 +155,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 result = "抓中";
             }
             showToast(result);
+            downToVideoMember();
         }
+
         @Override
         public void gameReconnect(JSONObject data) {
             Log.d(TAG, "gameReconnect -> " + data.toString());
@@ -156,7 +172,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void startQueueResult(boolean success, int errcode, String errmsg) {
             String result = "排队成功";
-            if (! success) {
+            if (success) {
+                // 加入互动直播房间
+                joinRoom();
+            } else {
                 result = errmsg;
             }
             showToast(result);
@@ -185,12 +204,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void roomQueueKickOff() {
             showToast("被踢出排队队列");
+            // 退出互动直播房间
+            quitRoom();
         }
     };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        /**
+        if (isTV()) {
+            Intent intent = new Intent(MainActivity.this, TVMainActivity.class);
+            startActivity(intent);
+            return;
+        }
+         **/
         setContentView(R.layout.activity_main);
         activity = this;
         upBtn = (Button) findViewById(R.id.upBtn);
@@ -207,12 +235,54 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         wsUrlText = (EditText) findViewById(R.id.wsUrlText);
         ivSwitch = (ImageView) findViewById(R.id.ivSwitch);
         avRootView = (AVRootView) findViewById(R.id.avRootView);
-        // 初始化视频
+        // 互动直播
         ivSwitch.setOnClickListener(this);
-        xhLiveManager = XHLiveManager.sharedManager();
+        xhLiveManager = XHLiveManager.getInstance();
         xhLiveManager.initSdk(getBaseContext(), sdkAppid, accountType);
-        XHLiveManager.setLogPrint(false);
+        xhLiveManager.setLogPrint(false);
         login();
+        // 旁路直播
+        XHLivePlayer player = XHLivePlayer.getInstance();
+        mMasterLiveViewoView = (TXCloudVideoView) findViewById(R.id.master_live_video_view);
+        mSlaveLiveViewoView = (TXCloudVideoView) findViewById(R.id.slave_live_video_view);
+        player.setVideoView(mMasterLiveViewoView, mSlaveLiveViewoView);
+        player.initPlayer(this, masterUrl, slaveUrl);
+        player.play();
+        player.setListener(new XHLivePlayerListener() {
+            @Override
+            public void onPlayEvent(int position, int event, Bundle param) {
+                switch (event) {
+                    case TXLiveConstants.PLAY_ERR_NET_DISCONNECT:
+                        Log.e(TAG, "[AnswerRoom] 拉流失败：网络断开");
+                        break;
+                    case TXLiveConstants.PLAY_EVT_CONNECT_SUCC:
+                        break;
+                    case TXLiveConstants.PLAY_EVT_RTMP_STREAM_BEGIN:
+                        break;
+                    case TXLiveConstants.PLAY_EVT_RCV_FIRST_I_FRAME:
+                        break;
+                    case TXLiveConstants.PLAY_EVT_PLAY_BEGIN:
+                        if (position == XHLivePlayer.CAMERA_MASTER) {
+                            // 旁路正面摄像头渲染成功
+                        } else if (position == XHLivePlayer.CAMERA_MASTER) {
+                            // 旁路侧面正面摄像头渲染成功
+                        }
+                        break;
+                    case TXLiveConstants.PLAY_EVT_PLAY_LOADING:
+                        break;
+                    case TXLiveConstants.PLAY_EVT_PLAY_PROGRESS:
+                        // 播放中
+                        break;
+                    default:
+                        Log.e(TAG, "TXLivePlayer index: " + position + "  event:" + event);
+                }
+            }
+
+            @Override
+            public void onNetStatus(int position, Bundle bundle) {
+
+            }
+        });
 
         // 初始化游戏
         wsUrlText.setText(wsUrl);
@@ -263,26 +333,42 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onPause() {
         super.onPause();
-        XHLiveManager.sharedManager().onPause();
+        XHLiveManager.getInstance().onPause();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        XHLiveManager.sharedManager().onResume();
+        XHLiveManager.getInstance().onResume();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        XHLiveManager.sharedManager().onDestory();
+        XHLiveManager.getInstance().onDestory();
+        XHLivePlayer.getInstance().destroy();
+    }
+
+    /**
+     * TV 模式
+     * @return
+     */
+    private boolean isTV(){
+        UiModeManager uiModeManager = (UiModeManager)getSystemService(UI_MODE_SERVICE);
+        Log.d(TAG, "getCurrentModeType: " + uiModeManager.getCurrentModeType());
+        return uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION
+                || uiModeManager.getCurrentModeType() == Configuration.TOUCHSCREEN_NOTOUCH;
     }
 
     @Override
     public void onClick(View view) {
         switch (view.getId()){
             case R.id.ivSwitch:
-                XHLiveManager.sharedManager().switchCamera();
+                if (xhLiveManager.isEnterRoom()) {
+                    XHLiveManager.getInstance().switchCamera();
+                } else {
+                    XHLivePlayer.getInstance().switchCamera();
+                }
                 break;
             case R.id.joinRoomBtn:
                 joinRoom();
@@ -294,10 +380,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 PlayerManager.sharedManager().startQueue();
                 break;
             case R.id.cancelQueueBtn:
+                // 退出互动直播房间
+                quitRoom();
                 PlayerManager.sharedManager().cancelQueue();
                 break;
             case R.id.insertCoinsBtn:
-                PlayerManager.sharedManager().insertCoins();
+                PlayerManager.sharedManager().insertCoins("123");
                 break;
         }
     }
@@ -307,6 +395,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onSuccess() {
                 Toast.makeText(activity, "Login Success", Toast.LENGTH_SHORT).show();
+                //joinRoom();
             }
             @Override
             public void onError(String module, int errCode, String errMsg) {
@@ -316,26 +405,59 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
     private void joinRoom() {
-        XHLiveManager.sharedManager().joinRoom(roomId, mMainCameraId, mSideCameraId, avRootView, new XHLiveListener(){
+        XHLiveManager.getInstance().joinRoom(roomId, mMainCameraId, mSideCameraId, avRootView, new XHLiveListener(){
             @Override
             public void onSuccess() {
                 Toast.makeText(activity, "Enter Room Success", Toast.LENGTH_SHORT).show();
-                xhLiveManager.upToVideoMember(null);
             }
+            @Override
             public void onError(String module, int errCode, String errMsg) {
                 Toast.makeText(activity, "Enter Room Error", Toast.LENGTH_SHORT).show();
-                joinRoom();
             }
         });
     }
     private void quitRoom() {
-        XHLiveManager.sharedManager().quitRoom(new XHLiveListener(){
+        XHLivePlayer.getInstance().showVideoView();
+        avRootView.setVisibility(View.INVISIBLE);
+        XHLiveManager.getInstance().quitRoom(new XHLiveListener(){
             @Override
             public void onSuccess() {
                 Toast.makeText(activity, "quit Room Success", Toast.LENGTH_SHORT).show();
             }
+            @Override
             public void onError(String module, int errCode, String errMsg) {
                 Toast.makeText(activity, "quit Room Error", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void upToVideoMember() {
+        if (! xhLiveManager.isEnterRoom()) {
+            Log.e(TAG, "未进入房间");
+            return;
+        }
+        XHLivePlayer.getInstance().pause();
+        XHLivePlayer.getInstance().hideVideoView();
+        avRootView.setVisibility(View.VISIBLE);
+        xhLiveManager.upToVideoMember(new XHLiveListener(){
+            @Override
+            public void onSuccess() {
+            }
+            @Override
+            public void onError(String module, int errCode, String errMsg) {
+                Toast.makeText(activity, errMsg, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+    private void downToVideoMember() {
+        XHLivePlayer.getInstance().resume();
+        xhLiveManager.downToVideoMember(new XHLiveListener(){
+            @Override
+            public void onSuccess() {
+            }
+            @Override
+            public void onError(String module, int errCode, String errMsg) {
+                Toast.makeText(activity, errMsg, Toast.LENGTH_SHORT).show();
             }
         });
     }

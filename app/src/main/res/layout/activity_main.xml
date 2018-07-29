@@ -4,13 +4,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.panda.wawajisdk.demo.MainActivity">
+    tools:context="com.panda.demo.MainActivity">
 
     <com.tencent.ilivesdk.view.AVRootView
         android:id="@+id/avRootView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -19,6 +20,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.0" />
+
+    <com.tencent.rtmp.ui.TXCloudVideoView
+        android:id="@+id/master_live_video_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="visible"
+        />
+    <com.tencent.rtmp.ui.TXCloudVideoView
+        android:id="@+id/slave_live_video_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        />
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/constraintLayout"
@@ -60,7 +74,7 @@
             android:layout_marginTop="70dp"
             android:text="L"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/constraintLayout" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <Button
             android:id="@+id/rightBtn"
@@ -70,7 +84,7 @@
             android:layout_marginTop="70dp"
             android:text="R"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/constraintLayout" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <Button
             android:id="@+id/grabBtn"
@@ -102,7 +116,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="25dp"
-        android:text="开始游戏"
+        android:text="连接机器"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/wsUrlText" />
@@ -134,6 +148,7 @@
         android:layout_marginStart="10dp"
         android:layout_marginTop="25dp"
         android:text="加入房间"
+        android:visibility="invisible"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/wsUrlText" />
 
@@ -144,6 +159,7 @@
         android:layout_marginEnd="10dp"
         android:layout_marginTop="25dp"
         android:text="退出房间"
+        android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/wsUrlText" />
 
