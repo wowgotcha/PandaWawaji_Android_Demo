@@ -20,11 +20,25 @@ import com.panda.wawajisdk.core.listener.PlayerConnectionListener;
 import com.panda.wawajisdk.core.listener.PlayerManagerListener;
 import com.panda.wawajisdk.core.listener.XHLiveListener;
 import com.panda.wawajisdk.core.listener.XHLivePlayerListener;
+import com.tencent.TIMCallBack;
+import com.tencent.TIMConversation;
+import com.tencent.TIMConversationType;
+import com.tencent.TIMElem;
+import com.tencent.TIMElemType;
+import com.tencent.TIMGroupManager;
+import com.tencent.TIMManager;
+import com.tencent.TIMMessage;
+import com.tencent.TIMMessageListener;
+import com.tencent.TIMTextElem;
+import com.tencent.TIMUserProfile;
+import com.tencent.TIMValueCallBack;
 import com.tencent.ilivesdk.view.AVRootView;
 import com.tencent.rtmp.TXLiveConstants;
 import com.tencent.rtmp.ui.TXCloudVideoView;
 
 import org.json.JSONObject;
+
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private final static String TAG = "MainActivity";
@@ -36,12 +50,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private XHLiveManager xhLiveManager;
     private int sdkAppid = 0; //互动直播 sdkAppid
     private int accountType = 0; //互动直播 accountType
-    private int roomId = 500139; //视频房间号
+    private int roomId = 500822; //视频房间号
     private String mMainCameraId = "wowgotcha_" + roomId + "_1"; //主摄像头主播ID
     private String mSideCameraId = "wowgotcha_" + roomId + "_2"; //侧摄像头主播 ID
-    private String userid = "test"; //玩家ID
+    private String userid = "wowgotcha_player_74av86efni"; //玩家ID
     //玩家互动直播登录签名凭证
-    private String usersig = "eJxlj1FrgzAYRd-9FZJXxxYTo*1gD7azsG5tsa1F9hJE0-G1mMYkK8rof9-mChV2X8*5XO6X47ou2r5t7ouyPH1Ky22nBHIfXYTR3Q0qBRUvLKe6*gdFq0ALXuyt0D30GWME46EDlZAW9nA1rDB2QE115P3EXz346TIcjelQgY8eLpJs*jLDsyyW50gWRrUPmZnnO5KOmrAZUcrythL0lSzy1Xsz72JIYjxNy6XuJnlri3Q3kWvPJPW29mApD1aqQ*IF3uoZkvUxeBpMWqjF9Q8lUTgmJBzQs9AGTrIXCPaZTyj*DXIuzjeTtVyA";
+    private String usersig = "eJxlj11PgzAYhe-5FYRro4VSYCZeIB-OhUUNyNSbpmnLaNigQoER439XcYkkvrfPc87J*6Hpum5kSXpJKG36WmE1SW7o17oBjIs-KKVgmCgMW-YP8pMULcekULydoYkQsgBYOoLxWolCnI2xGfeNoiXB8kAm3mLXJoPn8KIWi1DHKjwv-7ba35UrGzhoqYj9DLfRc3B-59M*J4-JVb*L05jsqgltBsms7Clcu6swjJN3wqoXFZwcX0R*mebOsEkPb2VxdF65zPwp34r8NihUZCUgoHRcp*qhtzpws5hU4sjPb0LoeTaE7oIOvO1EU8*CBUxkWhD8nKF9al*qq2Wp";
     private String wsUrl = "ws://ws1.open.wowgotcha.com:9090/play/b404217fbd5a2df1d6bfb462c3d60a7a0ee7b693";
     private String masterUrl = "rtmp://15814.liveplay.myqcloud.com/live/15814_8985b20c42e3bf0a5e30330158febabd";
     private String slaveUrl = "rtmp://15814.liveplay.myqcloud.com/live/15814_c1e71d8fe70e5733538879ed715e81c0";
@@ -238,8 +252,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // 互动直播
         ivSwitch.setOnClickListener(this);
         xhLiveManager = XHLiveManager.getInstance();
-        xhLiveManager.initSdk(getBaseContext(), sdkAppid, accountType);
-        xhLiveManager.setLogPrint(false);
+        xhLiveManager
+                .initSdk(getBaseContext(), sdkAppid, accountType)
+                .setLogPrint(false)
+                .imsupport(false);
         login();
         // 旁路直播
         XHLivePlayer player = XHLivePlayer.getInstance();
@@ -395,6 +411,41 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onSuccess() {
                 Toast.makeText(activity, "Login Success", Toast.LENGTH_SHORT).show();
+                // 加入群聊房间
+                TIMGroupManager.getInstance().applyJoinGroup(roomId + "", "request to join" + roomId, new TIMCallBack() {
+                    @Override
+                    public void onError(int code, String desc) {
+                        Log.d(TAG, "IM Join group error code:" + code + " message:" + desc);
+                    }
+
+                    @Override
+                    public void onSuccess() {
+                        //这里跟官方文档有些出入了，这里再去加入直播房间，不需要绑定
+                        Log.d(TAG, "IM join group success");
+                    }
+                });
+
+                // 监听接收消息
+                TIMManager.getInstance().addMessageListener(new TIMMessageListener() {
+                    @Override
+                    public boolean onNewMessages(List<TIMMessage> list) {
+                        for (int f = 0; f < list.size(); f++) {
+                            TIMMessage msg = list.get(f);
+                            for (int i = 0; i < msg.getElementCount(); ++i) {
+                                TIMElem elem = msg.getElement(i);
+                                //获取当前元素的类型
+                                TIMElemType elemType = elem.getType();
+                                if (elemType == TIMElemType.Text) {
+                                    //文本消息
+                                    TIMTextElem textElem = (TIMTextElem) elem;
+                                    TIMUserProfile userProfile = msg.getSenderProfile();
+                                    Log.d(TAG, "IM Message" + textElem.getText());
+                                }
+                            }
+                        }
+                        return false;
+                    }
+                });
                 //joinRoom();
             }
             @Override
@@ -409,6 +460,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onSuccess() {
                 Toast.makeText(activity, "Enter Room Success", Toast.LENGTH_SHORT).show();
+                sendTestMessage(2, "android 进来了");
+                sendTestMessage(1, "android 哈哈");
+                sendTestMessage(3, "android 退出");
+
             }
             @Override
             public void onError(String module, int errCode, String errMsg) {
@@ -472,5 +527,41 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         toast.setText(message);
         toast.show();
+    }
+
+    /**
+     * 发送消息
+     * @param message
+     */
+    public void sendMessage(String message){
+        //构造一条消息
+        TIMMessage msg = new TIMMessage();
+        //添加文本内容
+        TIMTextElem elem = new TIMTextElem();
+        elem.setText(message);
+        //将 Elem 添加到消息
+        if(msg.addElement(elem) != 0) {
+            Log.d(TAG, "addElement failed");
+            return;
+        }
+        TIMConversation timcon = TIMManager.getInstance().getConversation(TIMConversationType.Group, roomId + "");
+        //发送消息
+        timcon.sendMessage(msg, new TIMValueCallBack<TIMMessage>() {//发送消息回调
+            @Override
+            public void onError(int code, String desc) {//发送消息失败
+                //错误码 code 和错误描述 desc，可用于定位请求失败原因
+                //错误码 code 含义请参见错误码表
+                Log.d(TAG, "send message failed. code: " + code + " errmsg: " + desc);
+            }
+            @Override
+            public void onSuccess(TIMMessage msg) {//发送消息成功
+                Log.d(TAG, "SendMsg ok");
+            }
+        });
+    }
+
+    public void sendTestMessage(int type, String content) {
+        String msg = String.format("{\"headimgurl\":\"http://thirdwx.qlogo.cn/mmopen/vi_32/VOqEEtr4SSwzN7H8JFLOrlEahcsm1H3VGgeg2hvdTzH4dzyxwaWfNiaJaOib72e2lUyqjqNCUg2JWyibHcDmYxhFw/132\",\"sendName\":\"Player\",\"msgType\":\"%d\",\"content\":\"%s\"}", type, content);
+        sendMessage(msg);
     }
 }
