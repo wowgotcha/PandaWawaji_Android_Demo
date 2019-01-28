@@ -18,6 +18,7 @@ import com.panda.wawajisdk.core.XHLiveManager;
 import com.panda.wawajisdk.core.XHLivePlayer;
 import com.panda.wawajisdk.core.listener.PlayerConnectionListener;
 import com.panda.wawajisdk.core.listener.PlayerManagerListener;
+import com.panda.wawajisdk.core.listener.XHLiveJoinRoomListener;
 import com.panda.wawajisdk.core.listener.XHLiveListener;
 import com.panda.wawajisdk.core.listener.XHLivePlayerListener;
 import com.tencent.TIMCallBack;
@@ -32,7 +33,9 @@ import com.tencent.TIMMessageListener;
 import com.tencent.TIMTextElem;
 import com.tencent.TIMUserProfile;
 import com.tencent.TIMValueCallBack;
+import com.tencent.av.sdk.AVView;
 import com.tencent.ilivesdk.view.AVRootView;
+import com.tencent.ilivesdk.view.AVVideoView;
 import com.tencent.rtmp.TXLiveConstants;
 import com.tencent.rtmp.ui.TXCloudVideoView;
 
@@ -50,12 +53,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private XHLiveManager xhLiveManager;
     private int sdkAppid = 0; //互动直播 sdkAppid
     private int accountType = 0; //互动直播 accountType
-    private int roomId = 500822; //视频房间号
+    private int roomId = 500884; //视频房间号
     private String mMainCameraId = "wowgotcha_" + roomId + "_1"; //主摄像头主播ID
     private String mSideCameraId = "wowgotcha_" + roomId + "_2"; //侧摄像头主播 ID
-    private String userid = "wowgotcha_player_74av86efni"; //玩家ID
+    private String userid = "wowgotcha_player"; //玩家ID
     //玩家互动直播登录签名凭证
-    private String usersig = "eJxlj11PgzAYhe-5FYRro4VSYCZeIB-OhUUNyNSbpmnLaNigQoER439XcYkkvrfPc87J*6Hpum5kSXpJKG36WmE1SW7o17oBjIs-KKVgmCgMW-YP8pMULcekULydoYkQsgBYOoLxWolCnI2xGfeNoiXB8kAm3mLXJoPn8KIWi1DHKjwv-7ba35UrGzhoqYj9DLfRc3B-59M*J4-JVb*L05jsqgltBsms7Clcu6swjJN3wqoXFZwcX0R*mebOsEkPb2VxdF65zPwp34r8NihUZCUgoHRcp*qhtzpws5hU4sjPb0LoeTaE7oIOvO1EU8*CBUxkWhD8nKF9al*qq2Wp";
+    private String usersig = "";
     private String wsUrl = "ws://ws1.open.wowgotcha.com:9090/play/b404217fbd5a2df1d6bfb462c3d60a7a0ee7b693";
     private String masterUrl = "rtmp://15814.liveplay.myqcloud.com/live/15814_8985b20c42e3bf0a5e30330158febabd";
     private String slaveUrl = "rtmp://15814.liveplay.myqcloud.com/live/15814_c1e71d8fe70e5733538879ed715e81c0";
@@ -256,8 +259,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .initSdk(getBaseContext(), sdkAppid, accountType)
                 .setLogPrint(false)
                 .imsupport(false);
+        //xhLiveManager.setStreamSrcType(AVView.VIDEO_SRC_TYPE_CAMERA, AVView.VIDEO_SRC_TYPE_SCREEN); // 单个应用推流时使用
         login();
         // 旁路直播
+        /**
         XHLivePlayer player = XHLivePlayer.getInstance();
         mMasterLiveViewoView = (TXCloudVideoView) findViewById(R.id.master_live_video_view);
         mSlaveLiveViewoView = (TXCloudVideoView) findViewById(R.id.slave_live_video_view);
@@ -299,6 +304,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             }
         });
+         **/
 
         // 初始化游戏
         wsUrlText.setText(wsUrl);
@@ -456,9 +462,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
     private void joinRoom() {
-        XHLiveManager.getInstance().joinRoom(roomId, mMainCameraId, mSideCameraId, avRootView, new XHLiveListener(){
+        XHLiveManager.getInstance().joinRoom(roomId, mMainCameraId, mSideCameraId, avRootView, new XHLiveJoinRoomListener(){
             @Override
-            public void onSuccess() {
+            public void onSuccess(Object data) {
                 Toast.makeText(activity, "Enter Room Success", Toast.LENGTH_SHORT).show();
                 sendTestMessage(2, "android 进来了");
                 sendTestMessage(1, "android 哈哈");
@@ -468,6 +474,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onError(String module, int errCode, String errMsg) {
                 Toast.makeText(activity, "Enter Room Error", Toast.LENGTH_SHORT).show();
+            }
+            @Override
+            public void onSubViewCreated(AVRootView avRoot){
+                // 处理回调视频视图
+            }
+            @Override
+            public void onFirstFrameRecved(AVVideoView v, int position, int width, int height, int angle, String identifier){
+
+            }
+            @Override
+            public void onHasVideo(AVVideoView v, int position, String identifier, int srcType){
+
+            }
+            @Override
+            public void onNoVideo(AVVideoView v, int position, String identifier, int srcType){
+
             }
         });
     }

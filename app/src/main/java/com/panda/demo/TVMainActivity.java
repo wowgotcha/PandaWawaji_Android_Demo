@@ -19,8 +19,10 @@ import com.panda.wawajisdk.core.PlayerManager;
 import com.panda.wawajisdk.core.XHLiveManager;
 import com.panda.wawajisdk.core.listener.PlayerConnectionListener;
 import com.panda.wawajisdk.core.listener.PlayerManagerListener;
+import com.panda.wawajisdk.core.listener.XHLiveJoinRoomListener;
 import com.panda.wawajisdk.core.listener.XHLiveListener;
 import com.tencent.ilivesdk.view.AVRootView;
+import com.tencent.ilivesdk.view.AVVideoView;
 
 import org.json.JSONObject;
 
@@ -238,15 +240,31 @@ public class TVMainActivity extends AppCompatActivity {
         });
     }
     private void joinRoom() {
-        XHLiveManager.sharedManager().joinRoom(roomId, mMainCameraId, mSideCameraId, avRootView, new XHLiveListener(){
+        XHLiveManager.sharedManager().joinRoom(roomId, mMainCameraId, mSideCameraId, avRootView, new XHLiveJoinRoomListener(){
             @Override
-            public void onSuccess() {
+            public void onSuccess(Object data) {
                 Toast.makeText(activity, "Enter Room Success", Toast.LENGTH_SHORT).show();
                 xhLiveManager.upToVideoMember(null);
             }
             public void onError(String module, int errCode, String errMsg) {
                 Toast.makeText(activity, "Enter Room Error", Toast.LENGTH_SHORT).show();
                 joinRoom();
+            }
+            @Override
+            public void onSubViewCreated(AVRootView avRoot){
+                // 处理回调视频视图
+            }
+            @Override
+            public void onFirstFrameRecved(AVVideoView v, int position, int width, int height, int angle, String identifier){
+
+            }
+            @Override
+            public void onHasVideo(AVVideoView v, int position, String identifier, int srcType){
+
+            }
+            @Override
+            public void onNoVideo(AVVideoView v, int position, String identifier, int srcType){
+
             }
         });
     }
