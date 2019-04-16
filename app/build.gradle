@@ -40,5 +40,5 @@ dependencies {
     implementation 'com.tencent.livesdk:livesdk:1.1.4'
     implementation 'com.squareup.okhttp3:okhttp:3.10.0'
     implementation(name: 'PandaWawaji_SDK_1.0.7', ext: 'aar')
-    implementation(name: 'LiteAVSDK_Smart_5.3.6004', ext: 'aar')
+    implementation(name: 'LiteAVSDK_Smart_6.3.7089', ext: 'aar')
 }
